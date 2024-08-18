@@ -4,6 +4,7 @@ import numpy as np
 from fredapi import Fred
 from datetime import datetime
 import concurrent.futures
+import io
 
 
 from database import get_db_connection
@@ -228,7 +229,7 @@ def create_watchlist_df(sector_ticker='all'):
     cache_key = 'daily_stock_data'
     cached_data = mc.get(cache_key)
     if cached_data is not None:
-        df = pd.read_csv(pd.compat.StringIO(cached_data))
+        df = pd.read_csv(io.StringIO(cached_data))
 
     else:
         df = get_stock_ticker_data()

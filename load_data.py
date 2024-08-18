@@ -99,7 +99,7 @@ def load_macro_data(group, num_years):
     cache_key = f'cache_key_{group}'
     cached_data = mc.get(cache_key)
     if cached_data is not None:
-        data = pd.read_csv(io.StringIO(cached_data))
+        data = pd.read_csv(io.StringIO(cached_data), index_col=0)
         df = pd.DataFrame(data)
         df.index = pd.to_datetime(df.index)
     

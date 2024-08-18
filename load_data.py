@@ -266,9 +266,17 @@ def create_watchlist_df(sector_ticker='all'):
 
 # Card 4: Summary Graphs
 def get_sector_weightings_data():
-    df = pd.DataFrame()
-    return df
-    df = pd.read_csv('daily_stock_data.csv', index_col=0)
+    cache_key = 'daily_stock_data'
+    cached_data = mc.get(cache_key)
+    if cached_data is not None:
+        df = pd.read_csv(io.StringIO(cached_data))
+
+    else:
+        df = get_stock_ticker_data()
+        csv_data = df.to_csv(index=False)
+        mc.set(cache_key, csv_data, time=86400)
+
+    #df = pd.read_csv('daily_stock_data.csv', index_col=0)
     df = df.dropna(subset=['Name'])
 
     df['Market Cap'] = pd.to_numeric(df['Market Cap'], errors='coerce')

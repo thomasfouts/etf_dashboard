@@ -111,10 +111,16 @@ def load_macro_data(group, num_years):
         df.index = pd.to_datetime(df.index)
         for i in range(0,5):
             print('******')
-        print('Cache hit')
         print(df.columns)
-        for i in range(0,5):
-            print('******')
+        print('')
+        print('Cache hit -- df head')
+        print(df.head(10))
+        for i in range(0,3):
+            print('')
+        
+        print('Cache hit -- df tail')
+        print(df.tail(10))
+        print('')
         
     else:
         traces = MACRO_TRACE_DICT[group]

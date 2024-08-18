@@ -35,12 +35,21 @@ def fetch_etf_data(ticker, start_date='2022-12-1', interval='1d'):
     return df[['close', 'dividends']]
 
 def load_etf_df(column_name, tickers=TICKER_LIST):
+    
     tickers = ['sp500' if ticker == 'S&P 500' else ticker for ticker in tickers]
     conn = get_db_connection()
     df = pd.DataFrame()
 
     if(column_name == 'all' and len(tickers) == 1):
         table_name = tickers[0]
+
+        # cache_key = f'cache_key_{column_name}_{table_name}'
+        # cached_data = mc.get(cache_key)
+        # if cached_data is not None:
+        #     data = pd.read_csv(io.StringIO(cached_data))
+        #     df = pd.DataFrame(data)
+        #     df.index = pd.to_datetime(df.index)
+
         query = f"SELECT * FROM {table_name};"
         df = pd.read_sql(query, conn)
         df['datetime_index'] = pd.to_datetime(df['datetime_index'])
@@ -82,30 +91,38 @@ def load_etf_df(column_name, tickers=TICKER_LIST):
 
 
 # Card 2: Macro Data 
-#@cache.memoize(timeout=86400)  # Cache for 24 hours (86400 seconds)
 def load_macro_data(group, num_years):
-    #logging.debug(f"Accessing Redis cache for group: {group}, num_years: {num_years}")
     end_date = datetime.now()
     start_year = end_date.year - num_years - 1
     start_date = datetime(start_year,1,1)
+
+    cache_key = f'cache_key_{group}'
+    cached_data = mc.get(cache_key)
+    if cached_data is not None:
+        data = pd.read_csv(io.StringIO(cached_data))
+        df = pd.DataFrame(data)
+        df.index = pd.to_datetime(df.index)
     
-    traces = MACRO_TRACE_DICT[group]
-    
-    data = {}
-    for trace in traces:
-        if(len(trace.ticker) == 0):
-            continue
-        trace_series = fred.get_series(trace.ticker, start_date, end_date)
-        if(trace.yoy == True):
-            trace_series = calculate_yoy(trace_series)
-        if(trace.name == 'Nonfarm Payrolls 1M Change'):
-            trace_series = trace_series.diff()*1000
-        data[trace.name] = trace_series
+    else:
+        traces = MACRO_TRACE_DICT[group]
+        data = {}
+        for trace in traces:
+            if(len(trace.ticker) == 0):
+                continue
+            trace_series = fred.get_series(trace.ticker, start_date, end_date)
+            if(trace.yoy == True):
+                trace_series = calculate_yoy(trace_series)
+            if(trace.name == 'Nonfarm Payrolls 1M Change'):
+                trace_series = trace_series.diff()*1000
+            data[trace.name] = trace_series
+            
+        df = pd.DataFrame(data)
+        df.index = pd.to_datetime(df.index)
+        df.interpolate(method='time', inplace = True)
+
+        csv_data = df.to_csv(index=False)
+        mc.set(cache_key, csv_data, time=86400)
         
-    df = pd.DataFrame(data)
-    df.index = pd.to_datetime(df.index)
-    df.interpolate(method='time', inplace = True)
-    
     if(group == 'interest_rates'):
         df['3m10y Spread'] = df['10-Year Yield'] - df['3-Month Yield']  
         df['2s5s Spread'] = df['5-Year Yield'] - df['2-Year Yield']    

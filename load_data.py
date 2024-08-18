@@ -46,10 +46,11 @@ def load_etf_df(column_name, tickers=TICKER_LIST):
         # cache_key = f'cache_key_{column_name}_{table_name}'
         # cached_data = mc.get(cache_key)
         # if cached_data is not None:
-        #     data = pd.read_csv(io.StringIO(cached_data))
+        #     data = pd.read_csv(io.StringIO(cached_data), index_col=0)
         #     df = pd.DataFrame(data)
         #     df.index = pd.to_datetime(df.index)
-
+        #     return df
+            
         query = f"SELECT * FROM {table_name};"
         df = pd.read_sql(query, conn)
         df['datetime_index'] = pd.to_datetime(df['datetime_index'])
@@ -101,6 +102,7 @@ def load_macro_data(group, num_years):
     if cached_data is not None:
         data = pd.read_csv(io.StringIO(cached_data), index_col=0)
         df = pd.DataFrame(data)
+        print(df.columns)
         df.index = pd.to_datetime(df.index)
     
     else:
@@ -119,6 +121,7 @@ def load_macro_data(group, num_years):
         df = pd.DataFrame(data)
         df.index = pd.to_datetime(df.index)
         df.interpolate(method='time', inplace = True)
+        print(df.columns)
 
         csv_data = df.to_csv(index=False)
         mc.set(cache_key, csv_data, time=86400)

@@ -121,6 +121,8 @@ def load_macro_data(group, num_years):
         print('Cache hit -- df tail')
         print(df.tail(10))
         print('')
+        print('GDP growth rate')
+        print(df['Real GDP Growth Rate'].iloc[-10:])
         
     else:
         traces = MACRO_TRACE_DICT[group]

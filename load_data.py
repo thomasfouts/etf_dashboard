@@ -9,7 +9,7 @@ from database import get_db_connection
 from utilities import MACRO_TRACE_DICT, calculate_yoy, ETF_TO_SECTOR, TICKER_LIST
 
 import os
-import urlparse
+from urllib.parse import urlparse
 import bmemcached
 import json
 

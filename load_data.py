@@ -102,8 +102,12 @@ def load_macro_data(group, num_years):
     if cached_data is not None:
         data = pd.read_csv(io.StringIO(cached_data), index_col=0)
         df = pd.DataFrame(data)
-        print(df.columns)
+        
         df.index = pd.to_datetime(df.index)
+        for i in range(0,5):
+            print('******')
+        print('Cache hit')
+        print(df.columns)
     
     else:
         traces = MACRO_TRACE_DICT[group]
@@ -121,6 +125,9 @@ def load_macro_data(group, num_years):
         df = pd.DataFrame(data)
         df.index = pd.to_datetime(df.index)
         df.interpolate(method='time', inplace = True)
+        for i in range(0,5):
+            print('******')
+        print('Cache miss')
         print(df.columns)
 
         csv_data = df.to_csv(index=False)

@@ -225,7 +225,6 @@ def plot_macroeconomic_data(group, num_years, maturity = ['2 Year', '10 Year']):
     start_date = datetime(start_year,1,1)
     
     df = load_macro_data(group, num_years)
-
     df = df[df.index >=start_date]
     
     traces = MACRO_TRACE_DICT[group]

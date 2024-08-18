@@ -100,15 +100,22 @@ def load_macro_data(group, num_years):
     cache_key = f'cache_key_{group}'
     cached_data = mc.get(cache_key)
     if cached_data is not None:
-        data = pd.read_csv(io.StringIO(cached_data), index_col=0)
+        data = pd.read_csv(io.StringIO(cached_data))
         df = pd.DataFrame(data)
+
+        # traces = MACRO_TRACE_DICT[group]
+        # for trace in traces:
+        #     if(trace.name not in df.columns):
+        #         df[trace.name] = None
         
         df.index = pd.to_datetime(df.index)
         for i in range(0,5):
             print('******')
         print('Cache hit')
         print(df.columns)
-    
+        for i in range(0,5):
+            print('******')
+        
     else:
         traces = MACRO_TRACE_DICT[group]
         data = {}

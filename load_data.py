@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from fredapi import Fred
 from datetime import datetime
+import concurrent.futures
 
 
 from database import get_db_connection
@@ -119,6 +120,94 @@ def load_macro_data(group, num_years):
 
 # Card 3: Watchlist
 #Update stock data
+def fetch_stock_data(ticker):
+    stock = yf.Ticker(ticker)
+    info = stock.info
+    
+    drop_stock = False
+    
+    try:
+        name = info.get('shortName', 'N/A')
+    except:
+        name = 'N/A'
+        drop_stock = True
+    
+    try:
+        sector = info.get('sector', 'Unknown')
+    except:
+        sector = 'Unknown'
+        drop_stock = True
+    
+    try:
+        market_cap = info.get('marketCap', None)
+    except:
+        market_cap = 'N/A'
+        drop_stock = True
+    
+    try:
+        open_price = info.get('open', 'N/A')
+    except:
+        open_price = 'N/A'
+    
+    try:
+        pe_ratio = info.get('trailingPE', None)
+    except:
+        pe_ratio = 'N/A'
+    
+    try:
+        earnings_growth = info.get('earningsGrowth', None)
+    except:
+        earnings_growth = 'N/A'
+    
+    try:
+        eps = info.get('trailingEps', None)
+    except:
+        eps = 'N/A'
+    
+    try:
+        twoHundredDayAverage = info.get('twoHundredDayAverage', 'N/A')
+    except:
+        twoHundredDayAverage = 'N/A'
+    
+    try:
+        pegRatio = info.get('pegRatio', 'N/A')
+    except:
+        pegRatio = 'N/A'
+    
+    try:
+        beta = info.get('beta', 'N/A')
+    except:
+        beta = 'N/A'
+    
+    try:
+        one_month_change = stock.history(period='1mo')['Close'].pct_change().iloc[-1] * 100
+    except:
+        one_month_change = 'N/A'
+    
+    try:
+        six_month_change = stock.history(period='6mo')['Close'].pct_change().iloc[-1] * 100
+    except:
+        six_month_change = 'N/A'
+    
+    if drop_stock:
+        return None
+    
+    return {
+        'Ticker': ticker,
+        'Name': name,
+        'Sector': sector,
+        'Market Cap': market_cap if market_cap is not None else 'N/A',
+        'Price': open_price if open_price is not None else 'N/A',
+        'PE Ratio': pe_ratio if pe_ratio is not None else 'N/A',
+        'Earnings Growth': earnings_growth if earnings_growth is not None else 'N/A',
+        'EPS': eps if eps is not None else 'N/A',
+        '%-Change (1M)': one_month_change,
+        '%-Change (6M)': six_month_change,
+        '200 day Avg': twoHundredDayAverage if twoHundredDayAverage is not None else 'N/A',
+        'PEG Ratio': pegRatio if pegRatio is not None else 'N/A',
+        'Beta': beta if beta is not None else 'N/A'
+    }
+
 def get_stock_ticker_data():
     url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     table = pd.read_html(url)
@@ -126,96 +215,14 @@ def get_stock_ticker_data():
     tickers = df['Symbol'].tolist()
 
     data = []
-    for ticker in (tickers):
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        drop_stock = False
-        
-        try:
-            name = info.get('shortName', 'N/A')
-        except:
-            name = 'N/A'
-            drop_stock = True
-        
-        try:
-            sector = info.get('sector', 'Unknown')
-        except:
-            sector = 'Unknown'
-            drop_stock = True
-        
-        try:
-            market_cap = info.get('marketCap', None)
-        except:
-            market_cap = 'N/A'
-            drop_stock = True
-        
-        try:
-            open_price = info.get('open', 'N/A')
-        except:
-            open_price = 'N/A'
-        
-        try:
-            pe_ratio = info.get('trailingPE', None)
-        except:
-            pe_ratio = 'N/A'
-        
-        try:
-            earnings_growth = info.get('earningsGrowth', None)
-        except:
-            earnings_growth = 'N/A'
-        
-        try:
-            eps = info.get('trailingEps', None)
-        except:
-            eps = 'N/A'
-        
-        try:
-            twoHundredDayAverage = info.get('twoHundredDayAverage', 'N/A')
-        except:
-            twoHundredDayAverage = 'N/A'
-        
-        try:
-            pegRatio = info.get('pegRatio', 'N/A')
-        except:
-            pegRatio = 'N/A'
-        
-        try:
-            beta = info.get('beta', 'N/A')
-        except:
-            beta = 'N/A'
-        
-        try:
-            one_month_change = stock.history(period='1mo')['Close'].pct_change().iloc[-1] * 100
-        except:
-            one_month_change = 'N/A'
-        
-        try:
-            six_month_change = stock.history(period='6mo')['Close'].pct_change().iloc[-1] * 100
-        except:
-            six_month_change = 'N/A'
-        
-        if drop_stock:
-            continue
-            
-        data.append({
-            'Ticker': ticker,
-            'Name': name,
-            'Sector': sector,
-            'Market Cap': market_cap if market_cap is not None else 'N/A',
-            'Price': open_price if open_price is not None else 'N/A',
-            'PE Ratio': pe_ratio if pe_ratio is not None else 'N/A',
-            'Earnings Growth': earnings_growth if earnings_growth is not None else 'N/A',
-            'EPS': eps if eps is not None else 'N/A',
-            '%-Change (1M)': one_month_change,
-            '%-Change (6M)': six_month_change,
-            '200 day Avg': twoHundredDayAverage if twoHundredDayAverage is not None else 'N/A',
-            'PEG Ratio': pegRatio if pegRatio is not None else 'N/A',
-            'Beta': beta if beta is not None else 'N/A'
-        })
-    
-    df = pd.DataFrame(data)
-    return df
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        future_to_ticker = {executor.submit(fetch_stock_data, ticker): ticker for ticker in tickers}
+        for future in concurrent.futures.as_completed(future_to_ticker):
+            result = future.result()
+            if result:
+                data.append(result)
+
+    return pd.DataFrame(data)
 
 def create_watchlist_df(sector_ticker='all'):
     cache_key = 'daily_stock_data'
@@ -226,7 +233,7 @@ def create_watchlist_df(sector_ticker='all'):
     else:
         df = get_stock_ticker_data()
         csv_data = df.to_csv(index=False)
-        mc.set(cache_key, csv_data, time=600)
+        mc.set(cache_key, csv_data, time=86400)
     
     
     df.reset_index(inplace=True)

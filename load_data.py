@@ -8,6 +8,14 @@ from datetime import datetime
 from database import get_db_connection
 from utilities import MACRO_TRACE_DICT, calculate_yoy, ETF_TO_SECTOR, TICKER_LIST
 
+import os
+import urlparse
+import bmemcached
+import json
+
+mc = bmemcached.Client(os.environ.get('MEMCACHEDCLOUD_SERVERS').split(','), os.environ.get('MEMCACHEDCLOUD_USERNAME'), os.environ.get('MEMCACHEDCLOUD_PASSWORD'))
+
+
 import logging
 
 #logging.basicConfig(level=logging.DEBUG)
@@ -110,10 +118,116 @@ def load_macro_data(group, num_years):
 
 
 # Card 3: Watchlist
-def create_watchlist_df(sector_ticker='all'):
-    df = pd.DataFrame()
+#Update stock data
+def get_stock_ticker_data():
+    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    table = pd.read_html(url)
+    df = table[0]
+    tickers = df['Symbol'].tolist()
+
+    data = []
+    for ticker in (tickers):
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        drop_stock = False
+        
+        try:
+            name = info.get('shortName', 'N/A')
+        except:
+            name = 'N/A'
+            drop_stock = True
+        
+        try:
+            sector = info.get('sector', 'Unknown')
+        except:
+            sector = 'Unknown'
+            drop_stock = True
+        
+        try:
+            market_cap = info.get('marketCap', None)
+        except:
+            market_cap = 'N/A'
+            drop_stock = True
+        
+        try:
+            open_price = info.get('open', 'N/A')
+        except:
+            open_price = 'N/A'
+        
+        try:
+            pe_ratio = info.get('trailingPE', None)
+        except:
+            pe_ratio = 'N/A'
+        
+        try:
+            earnings_growth = info.get('earningsGrowth', None)
+        except:
+            earnings_growth = 'N/A'
+        
+        try:
+            eps = info.get('trailingEps', None)
+        except:
+            eps = 'N/A'
+        
+        try:
+            twoHundredDayAverage = info.get('twoHundredDayAverage', 'N/A')
+        except:
+            twoHundredDayAverage = 'N/A'
+        
+        try:
+            pegRatio = info.get('pegRatio', 'N/A')
+        except:
+            pegRatio = 'N/A'
+        
+        try:
+            beta = info.get('beta', 'N/A')
+        except:
+            beta = 'N/A'
+        
+        try:
+            one_month_change = stock.history(period='1mo')['Close'].pct_change().iloc[-1] * 100
+        except:
+            one_month_change = 'N/A'
+        
+        try:
+            six_month_change = stock.history(period='6mo')['Close'].pct_change().iloc[-1] * 100
+        except:
+            six_month_change = 'N/A'
+        
+        if drop_stock:
+            continue
+            
+        data.append({
+            'Ticker': ticker,
+            'Name': name,
+            'Sector': sector,
+            'Market Cap': market_cap if market_cap is not None else 'N/A',
+            'Price': open_price if open_price is not None else 'N/A',
+            'PE Ratio': pe_ratio if pe_ratio is not None else 'N/A',
+            'Earnings Growth': earnings_growth if earnings_growth is not None else 'N/A',
+            'EPS': eps if eps is not None else 'N/A',
+            '%-Change (1M)': one_month_change,
+            '%-Change (6M)': six_month_change,
+            '200 day Avg': twoHundredDayAverage if twoHundredDayAverage is not None else 'N/A',
+            'PEG Ratio': pegRatio if pegRatio is not None else 'N/A',
+            'Beta': beta if beta is not None else 'N/A'
+        })
+    
+    df = pd.DataFrame(data)
     return df
-    df = pd.read_csv('daily_stock_data.csv', index_col=0)
+
+def create_watchlist_df(sector_ticker='all'):
+    cache_key = 'daily_stock_data'
+    cached_data = mc.get(cache_key)
+    if cached_data is not None:
+        df = pd.read_csv(pd.compat.StringIO(cached_data))
+
+    else:
+        df = get_stock_ticker_data()
+        csv_data = df.to_csv(index=False)
+        mc.set(cache_key, csv_data, time=600)
+    
     
     df.reset_index(inplace=True)
     df = df[df['Sector']!='Unknown']

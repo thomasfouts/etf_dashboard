@@ -92,7 +92,12 @@ def update_sector_data():
 
 
 #Update stock data
-def save_ticker_data(tickers):
+def get_stock_ticker_data():
+    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    table = pd.read_html(url)
+    df = table[0]
+    tickers = df['Symbol'].tolist()
+
     data = []
     for ticker in (tickers):
         stock = yf.Ticker(ticker)
@@ -183,16 +188,17 @@ def save_ticker_data(tickers):
         })
     
     df = pd.DataFrame(data)
+    return df
     #df.sort_values(by='Market Cap', ascending=False, inplace=True)
-    write_stocks_to_db(df, 'stock_data')
+    #write_stocks_to_db(df, 'stock_data')
 
 
-def update_stock_data():
-    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-    table = pd.read_html(url)
-    df = table[0]
-    tickers = df['Symbol'].tolist()
-    save_ticker_data(tickers)
+# def update_stock_data():
+#     url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+#     table = pd.read_html(url)
+#     df = table[0]
+#     tickers = df['Symbol'].tolist()
+#     save_ticker_data(tickers)
 
 
 

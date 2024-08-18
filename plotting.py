@@ -293,8 +293,6 @@ def plot_macroeconomic_data(group, num_years, maturity = ['2 Year', '10 Year']):
 
 #Plotting functions for card 4
 def plot_sector_weightings():
-    fig = go.Figure()
-    return fig
     sector_weightings = get_sector_weightings_data()
 
     # Create the pie chart
@@ -305,7 +303,7 @@ def plot_sector_weightings():
     )])
 
     fig.update_layout(
-        title="Sector Weighting in S&P 500",
+        title="Sector Weighting by Market Cap in S&P 500",
         margin=dict(l=20, r=20, t=30, b=20),
         showlegend=False
     )

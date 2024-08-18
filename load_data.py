@@ -99,32 +99,24 @@ def load_macro_data(group, num_years):
 
     cache_key = f'cache_key_{group}'
     cached_data = mc.get(cache_key)
-    # if cached_data is not None:
-    #     data = pd.read_csv(io.StringIO(cached_data))
-    #     df = pd.DataFrame(data)
+    if cached_data is not None:
+        data = pd.read_csv(io.StringIO(cached_data), index_col = 0, parse_dates = True)
+        df = pd.DataFrame(data)
 
-    #     # traces = MACRO_TRACE_DICT[group]
-    #     # for trace in traces:
-    #     #     if(trace.name not in df.columns):
-    #     #         df[trace.name] = None
+        # traces = MACRO_TRACE_DICT[group]
+        # for trace in traces:
+        #     if(trace.name not in df.columns):
+        #         df[trace.name] = None
         
-    #     df.index = pd.to_datetime(df.index)
-    #     for i in range(0,5):
-    #         print('******')
-    #     print(df.columns)
-    #     print('')
-    #     print('Cache hit -- df head')
-    #     print(df.head(10))
-    #     for i in range(0,3):
-    #         print('')
-        
-    #     print('Cache hit -- df tail')
-    #     print(df.tail(10))
-    #     print('')
-    #     print('GDP growth rate')
-    #     print(df['Real GDP Growth Rate'].iloc[-10:])
-    if(1 > 2):
-        pass
+        df.index = pd.to_datetime(df.index)
+        for i in range(0,5):
+            print('******')
+        print(df.columns)
+        print('')
+                
+        print('Cache hit -- df tail')
+        print(df.tail(10))
+        print('')
         
     else:
         traces = MACRO_TRACE_DICT[group]

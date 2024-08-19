@@ -112,13 +112,13 @@ app.layout = dbc.Container(
                                                 id='metric-dropdown',
                                                 options=[
                                                     {'label': 'Price', 'value': 'Price'},
-                                                    {'label': 'Annual Performance', 'value': 'Annual Performance'},
+                                                    {'label': 'Year-End Indexed Price', 'value': 'Annual Performance'},
                                                     {'label': 'Volatility', 'value': 'Volatility'},
                                                     {'label': 'Dividend Yield', 'value': 'Dividend Yield'},
                                                     {'label': 'Sharpe Ratio', 'value': 'Sharpe Ratio'},
                                                     {'label': 'RSI', 'value': 'RSI'}
                                                 ],
-                                                value='Annual Performance',
+                                                value='Year-End Indexed Price',
                                                 clearable=False,
                                             ),
                                             width=3,

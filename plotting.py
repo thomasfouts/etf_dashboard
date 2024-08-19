@@ -75,7 +75,7 @@ def plot_bar_graph(df, metric_name):
 
 def plot_metric(metric_name, num_years=2, num_periods=1, bar=False):
     metric_mappings = {'Price':'close',
-                  'Annual Performance':'ytd_pct',
+                  'Year-End Indexed Price':'ytd_pct',
                   'Volatility':'volatility',
                   'Dividend Yield':'div_yield',
                   'Sharpe Ratio':'sharpe',

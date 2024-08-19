@@ -405,7 +405,7 @@ def update_etf_graph(metric, active_tab, rolling_average, graph_type, num_years)
         rolling_average = 1
     if(active_tab == "tab-1"):
         if(metric == None or metric in ETF_TO_SECTOR.keys()):
-            metric = 'Annual Performance'
+            metric = 'Year-End Indexed Price'
         return plot_metric(metric, num_years, rolling_average, graph_type == "bar"), metric_options, metric, create_watchlist_df().to_dict('records')
     else:
         if(metric == None or metric not in ETF_TO_SECTOR.keys()):

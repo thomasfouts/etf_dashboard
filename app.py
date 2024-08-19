@@ -112,7 +112,7 @@ app.layout = dbc.Container(
                                                 id='metric-dropdown',
                                                 options=[
                                                     {'label': 'Price', 'value': 'Price'},
-                                                    {'label': 'Year-End Indexed Price', 'value': 'Annual Performance'},
+                                                    {'label': 'Year-End Indexed Price', 'value': 'Year-End Indexed Price'},
                                                     {'label': 'Volatility', 'value': 'Volatility'},
                                                     {'label': 'Dividend Yield', 'value': 'Dividend Yield'},
                                                     {'label': 'Sharpe Ratio', 'value': 'Sharpe Ratio'},
@@ -380,7 +380,7 @@ app.layout = dbc.Container(
 def update_etf_graph(metric, active_tab, rolling_average, graph_type, num_years):
     metric_options=[
         {'label': 'Price', 'value': 'Price'},
-        {'label': 'Year-End Indexed Price', 'value': 'Annual Performance'},
+        {'label': 'Year-End Indexed Price', 'value': 'Year-End Indexed Price'},
         {'label': 'Volatility', 'value': 'Volatility'},
         {'label': 'Dividend Yield', 'value': 'Dividend Yield'},
         {'label': 'Sharpe Ratio', 'value': 'Sharpe Ratio'},

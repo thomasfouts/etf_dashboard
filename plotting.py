@@ -140,7 +140,7 @@ def plot_sector_data(ticker, num_years = 1, num_periods = 7):
         df = df.rolling(window=num_periods, min_periods=1).mean()
     
     metric_mappings = {'Price':'close',
-                  'Annual Performance':'ytd_pct',
+                  'Year-End Indexed Price':'ytd_pct',
                   'Volatility':'volatility',
                   'Dividend Yield':'div_yield',
                   'Sharpe Ratio':'sharpe',

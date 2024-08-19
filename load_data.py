@@ -5,25 +5,18 @@ from fredapi import Fred
 from datetime import datetime
 import concurrent.futures
 import io
-
+import os
+from urllib.parse import urlparse
+import bmemcached
 
 from database import get_db_connection
 from utilities import MACRO_TRACE_DICT, calculate_yoy, ETF_TO_SECTOR, TICKER_LIST
 
-import os
-from urllib.parse import urlparse
-import bmemcached
-import json
+FRED_API_KEY = "582b6c3c103024a7540bbcbc03ed0142"
+fred = Fred(api_key=FRED_API_KEY)
 
 mc = bmemcached.Client(os.environ.get('MEMCACHEDCLOUD_SERVERS').split(','), os.environ.get('MEMCACHEDCLOUD_USERNAME'), os.environ.get('MEMCACHEDCLOUD_PASSWORD'))
 
-
-import logging
-
-#logging.basicConfig(level=logging.DEBUG)
-
-FRED_API_KEY = "582b6c3c103024a7540bbcbc03ed0142"
-fred = Fred(api_key=FRED_API_KEY)
 
 def fetch_etf_data(ticker, start_date='2022-12-1', interval='1d'):
     ticker = '^GSPC' if ticker == 'S&P 500' or ticker == 'SP500' else ticker
@@ -34,23 +27,17 @@ def fetch_etf_data(ticker, start_date='2022-12-1', interval='1d'):
     df.rename(columns = {'Close': 'close', 'Dividends':'dividends'}, inplace = True)
     return df[['close', 'dividends']]
 
+# Card 1: Sector Data
 def load_etf_df(column_name, tickers=TICKER_LIST):
-    
     tickers = ['sp500' if ticker == 'S&P 500' else ticker for ticker in tickers]
+    if isinstance(column_name, str):
+        column_name = [column_name]  # Convert to list for consistency
+
     conn = get_db_connection()
     df = pd.DataFrame()
 
-    if(column_name == 'all' and len(tickers) == 1):
+    if(column_name[0] == 'all' and len(tickers) == 1):
         table_name = tickers[0]
-
-        # cache_key = f'cache_key_{column_name}_{table_name}'
-        # cached_data = mc.get(cache_key)
-        # if cached_data is not None:
-        #     data = pd.read_csv(io.StringIO(cached_data), index_col=0)
-        #     df = pd.DataFrame(data)
-        #     df.index = pd.to_datetime(df.index)
-        #     return df
-            
         query = f"SELECT * FROM {table_name};"
         df = pd.read_sql(query, conn)
         df['datetime_index'] = pd.to_datetime(df['datetime_index'])
@@ -58,8 +45,6 @@ def load_etf_df(column_name, tickers=TICKER_LIST):
         conn.close()
         return df
 
-    if isinstance(column_name, str):
-        column_name = [column_name]  # Convert to list for consistency
 
     # Build the SQL query
     select_statements = [f"{tickers[0]}.datetime_index"] # if i == 0 else '' for i, ticker in enumerate(tickers)]
@@ -79,8 +64,6 @@ def load_etf_df(column_name, tickers=TICKER_LIST):
     df.set_index('datetime_index', inplace=True)
     conn.close()
     
-    #rename_dict = {col: col.upper() for col in df.columns if col.upper() in TICKER_LIST}
-    #df = df.rename(columns=rename_dict)
     
     if (column_name == 'volatility'):
         stock = yf.Ticker('^VIX')
@@ -102,21 +85,7 @@ def load_macro_data(group, num_years):
     if cached_data is not None:
         data = pd.read_csv(io.StringIO(cached_data), index_col = 0, parse_dates = True)
         df = pd.DataFrame(data)
-
-        # traces = MACRO_TRACE_DICT[group]
-        # for trace in traces:
-        #     if(trace.name not in df.columns):
-        #         df[trace.name] = None
-        
         df.index = pd.to_datetime(df.index)
-        for i in range(0,5):
-            print('******')
-        print(df.columns)
-        print('')
-                
-        print('Cache hit -- df tail')
-        print(df.tail(10))
-        print('')
         
     else:
         traces = MACRO_TRACE_DICT[group]
@@ -134,10 +103,6 @@ def load_macro_data(group, num_years):
         df = pd.DataFrame(data)
         df.index = pd.to_datetime(df.index)
         df.interpolate(method='time', inplace = True)
-        for i in range(0,5):
-            print('******')
-        print('Cache miss')
-        print(df.columns)
 
         csv_data = df.to_csv(index=True)
         mc.set(cache_key, csv_data, time=86400)
@@ -270,7 +235,7 @@ def create_watchlist_df(sector_ticker='all'):
     else:
         df = get_stock_ticker_data()
         csv_data = df.to_csv(index=False)
-        mc.set(cache_key, csv_data, time=86400)
+        mc.set(cache_key, csv_data, time=82800)
     
     
     df.reset_index(inplace=True)
@@ -300,6 +265,7 @@ def create_watchlist_df(sector_ticker='all'):
     
     return df
 
+
 # Card 4: Summary Graphs
 def get_sector_weightings_data():
     cache_key = 'daily_stock_data'
@@ -310,7 +276,7 @@ def get_sector_weightings_data():
     else:
         df = get_stock_ticker_data()
         csv_data = df.to_csv(index=False)
-        mc.set(cache_key, csv_data, time=86400)
+        mc.set(cache_key, csv_data, time=82800)
 
     #df = pd.read_csv('daily_stock_data.csv', index_col=0)
     df = df.dropna(subset=['Name'])
@@ -321,6 +287,14 @@ def get_sector_weightings_data():
     return sector_weightings
 
 def get_quarterly_annualized_risk_return(ticker):
+    cache_key = f'risk_return_{ticker}'
+    cached_data = mc.get(cache_key)
+    if cached_data is not None:
+        data = pd.read_csv(io.StringIO(cached_data), index_col = 0, parse_dates = True)
+        df = pd.DataFrame(data)
+        df.index = pd.to_datetime(df.index)
+        return df
+
     df = fetch_etf_data(ticker, datetime(2019, 12,31))
     start_date = datetime(2019, 12,31)
     df = df[df.index >= start_date]
@@ -356,4 +330,6 @@ def get_quarterly_annualized_risk_return(ticker):
                 })
 
     result_df = pd.DataFrame(results)
+    csv_data = result_df.to_csv(index=True)
+    mc.set(cache_key, csv_data, time=86400)
     return result_df

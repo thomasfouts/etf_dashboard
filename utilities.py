@@ -79,6 +79,9 @@ MACRO_TRACE_DICT = {
     ],
 }
 
+# Returns the spreads to be shown for the given maturities
+# Only spreads between given maturies are included
+# If a maturity does not share a spread with any of the other selected maturies, all spreads are included
 def get_interest_rates_columns(maturity):
     maturities = {
         '2 Year': {

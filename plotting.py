@@ -6,24 +6,8 @@ from datetime import datetime, timedelta
 
 #from graph_tools import draw_year_dividers, format_graphs
 from load_data import load_etf_df, load_macro_data, get_sector_weightings_data, get_quarterly_annualized_risk_return, create_watchlist_df
-from utilities import MACRO_TRACE_DICT, get_interest_rates_columns, draw_year_dividers, format_graphs
+from utilities import MACRO_TRACE_DICT, get_interest_rates_columns, draw_year_dividers, format_graphs, SECTOR_ETFS, ETF_TO_SECTOR
 
-
-SECTOR_ETFS = {
-    'Materials': 'XLB',
-    'Communication Services': 'XLC',
-    'Energy': 'XLE',
-    'Financials': 'XLF',
-    'Industrials': 'XLI',
-    'Technology': 'XLK',
-    'Consumer Staples': 'XLP',
-    'Real Estate': 'XLRE',
-    'Utilities': 'XLU',
-    'Healthcare': 'XLV',
-    'Consumer Discretionary': 'XLY'
-}
-
-ETF_TO_SECTOR = {value: key for key, value in SECTOR_ETFS.items()}
 
 #Plotting functions for card 1
 def plot_bar_graph(df, metric_name):

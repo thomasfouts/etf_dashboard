@@ -3,7 +3,6 @@ import pandas as pd
 
 
 def get_db_connection():
-    
     conn = psycopg2.connect(
         host='my-db-instance.c56guommcuf9.us-east-2.rds.amazonaws.com',
         database="initial_db",
@@ -12,9 +11,7 @@ def get_db_connection():
     )
     return conn
 
-
 def save_to_db(df, table_name):
-    # Connect to the database
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -34,7 +31,6 @@ def save_to_db(df, table_name):
 
     # If the table does not exist, create it
     if not table_exists:
-        # Create table statement based on the DataFrame's schema
         create_table_query = f"""
         CREATE TABLE {table_name} (
             datetime_index TIMESTAMP PRIMARY KEY,
@@ -53,22 +49,9 @@ def save_to_db(df, table_name):
         """
         cur.execute(insert_query, (i,) + tuple(row))
 
-    # Commit the changes and close the connection
     conn.commit()
     cur.close()
     conn.close()
-
-
-
-def load_from_csv(ticker):
-    df = pd.read_csv(ticker + '.csv', index_col = 0)
-    df.index = pd.to_datetime(df.index)
-    df = df.iloc[:-3]
-    return df
-
-def csv_to_database():
-    df = load_from_csv('XLB')
-    save_to_db(df, 'XLB')
 
 
 def ticker_csv_to_database():
@@ -76,20 +59,9 @@ def ticker_csv_to_database():
     for ticker in tickers:
         df = pd.read_csv(ticker + '.csv', index_col = 0)
         df.index = pd.to_datetime(df.index)
-        df = df.iloc[:-3]
         
         ticker_name = ticker if ticker != 'S&P 500' else 'SP500'
         save_to_db(df, ticker_name)
-
-def get_table(table_name):
-    # Connect to the database
-    conn = get_db_connection()
-    query = f"SELECT * FROM {table_name};"
-    df = pd.read_sql(query, conn)
-    
-    conn.close()
-    return df
-
 
 if __name__ == '__main__':
     ticker_csv_to_database()

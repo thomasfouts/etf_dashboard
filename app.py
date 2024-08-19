@@ -8,8 +8,8 @@ from dash.dash_table.Format import Format, Scheme, Sign
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
-import gunicorn                     #whilst your local machine's webserver doesn't need this, Heroku's linux webserver (i.e. dyno) does. I.e. This is your HTTP server
-from whitenoise import WhiteNoise   #for serving static files on Heroku
+import gunicorn                     
+from whitenoise import WhiteNoise
 
 from plotting import(
     plot_sector_data, 
@@ -22,14 +22,11 @@ from load_data import ETF_TO_SECTOR, create_watchlist_df
 
 # Instantiate dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-# Reference the underlying flask app (Used by gunicorn webserver in Heroku production deployment)
 server = app.server 
 
-# Enable Whitenoise for serving static files from Heroku (the /static folder is seen as root by Heroku) 
+# Whitenoise --> serving static files from Heroku (not used)
 server.wsgi_app = WhiteNoise(server.wsgi_app, root='static/') 
 
-# Define Dash layout
 # Define the layout of the dashboard
 app.layout = dbc.Container(
     fluid=True,
@@ -286,7 +283,7 @@ app.layout = dbc.Container(
                                     #filter_action="native",
                                     sort_action="native",
                                     sort_mode= 'single',
-                                    row_selectable='multi',
+                                    #row_selectable='multi',
                                     page_action='native',
                                     page_size = 50
                                 ),
@@ -365,7 +362,10 @@ app.layout = dbc.Container(
     style={"height": "100vh", "padding": "20px"}
 )
 
-
+# Callback for ETF graph
+# Returns graph-2 based on the selected metric, active tab, rolling average, graph type, and timeframe
+# Returns metric-dropdown options and value based on the active tab
+# Returns watchlist-table data based on the active tab and selected industry
 @app.callback(
     [Output("graph-2", "figure"),
      Output("metric-dropdown", "options"),
@@ -388,17 +388,17 @@ def update_etf_graph(metric, active_tab, rolling_average, graph_type, num_years)
         ]
     
     eft_options = [
-        {'label': 'Materials', 'value': 'XLB'},
-        {'label': 'Communication Services', 'value': 'XLC'},
-        {'label': 'Energy', 'value': 'XLE'},
-        {'label': 'Financials', 'value': 'XLF'},
-        {'label': 'Industrials', 'value': 'XLI'},
-        {'label': 'Technology', 'value': 'XLK'},
-        {'label': 'Consumer Staples', 'value': 'XLP'},
-        {'label': 'Real Estate', 'value': 'XLRE'},
-        {'label': 'Utilities', 'value': 'XLU'},
-        {'label': 'Health Care', 'value': 'XLV'},
-        {'label': 'Consumer Discretionary', 'value': 'XLY'}
+        {'label': 'Materials (XLB)', 'value': 'XLB'},
+        {'label': 'Communication Services (XLC)', 'value': 'XLC'},
+        {'label': 'Energy (XLE)', 'value': 'XLE'},
+        {'label': 'Financials (XLF)', 'value': 'XLF'},
+        {'label': 'Industrials (XLI)', 'value': 'XLI'},
+        {'label': 'Technology (XLK)', 'value': 'XLK'},
+        {'label': 'Consumer Staples (XLP)', 'value': 'XLP'},
+        {'label': 'Real Estate (XLRE)', 'value': 'XLRE'},
+        {'label': 'Utilities (XLU)', 'value': 'XLU'},
+        {'label': 'Health Care (XLV)', 'value': 'XLV'},
+        {'label': 'Consumer Discretionary (XLY)', 'value': 'XLY'}
     ]
     
     if(rolling_average == None):
@@ -412,6 +412,9 @@ def update_etf_graph(metric, active_tab, rolling_average, graph_type, num_years)
             metric = 'XLE'
         return plot_sector_data(metric, num_years, rolling_average), eft_options, metric, create_watchlist_df(metric).to_dict('records')
     
+# Callback for Macro graph
+# Returns graph-4 based on the selected tab, maturity (interest rates), and timeframe
+# Disables the maturities dropdown if the active tab is not 'Interest Rates'
 @app.callback(
     [Output("graph-4", "figure"), Output("macro-dropdown", "disabled")],
     [Input("macro-tabs", "active_tab"), Input('Interst-Rate-Checklist', 'value'), Input('timeframe-radio', 'value')]
@@ -431,6 +434,8 @@ def update_macro_graph(active_tab, value, num_years):
     
     return plot_macroeconomic_data(tab_dict[active_tab], num_years), True
 
+# Callback for the overview graphs
+# Returns graph-1 based on the active tab
 @app.callback(
     Output("graph-1", "figure"),
     [Input("overview-tabs", "active_tab")]

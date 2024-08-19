@@ -7,9 +7,8 @@ from load_data import load_etf_df, fetch_etf_data
 from utilities import TICKER_LIST
 from database import save_to_db
 
-#Fetch ETF data, compute values, push to csv
-
-
+#Pulls ETF data from RDS, fetches new data from Yahoo Finance, computes values, and pushes back to RDS
+#Scheduled to run every weekday at 6am
 def calculate_rolling_volatility(df, window=21, annualize=True):
     returns = df['close'].pct_change().dropna()
     rolling_volatility = returns.rolling(window=window).std()
@@ -85,121 +84,9 @@ def update_sector_dataframe(ticker):
 
 def update_sector_data():
     for ticker in TICKER_LIST:
-        print(ticker)
         df = update_sector_dataframe(ticker)
         ticker = 'sp500' if ticker == 'S&P 500' else ticker
         save_to_db(df, ticker)
-
-
-#Update stock data
-def get_stock_ticker_data():
-    url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-    table = pd.read_html(url)
-    df = table[0]
-    tickers = df['Symbol'].tolist()
-
-    data = []
-    for ticker in (tickers):
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        drop_stock = False
-        
-        try:
-            name = info.get('shortName', 'N/A')
-        except:
-            name = 'N/A'
-            drop_stock = True
-        
-        try:
-            sector = info.get('sector', 'Unknown')
-        except:
-            sector = 'Unknown'
-            drop_stock = True
-        
-        try:
-            market_cap = info.get('marketCap', None)
-        except:
-            market_cap = 'N/A'
-            drop_stock = True
-        
-        try:
-            open_price = info.get('open', 'N/A')
-        except:
-            open_price = 'N/A'
-        
-        try:
-            pe_ratio = info.get('trailingPE', None)
-        except:
-            pe_ratio = 'N/A'
-        
-        try:
-            earnings_growth = info.get('earningsGrowth', None)
-        except:
-            earnings_growth = 'N/A'
-        
-        try:
-            eps = info.get('trailingEps', None)
-        except:
-            eps = 'N/A'
-        
-        try:
-            twoHundredDayAverage = info.get('twoHundredDayAverage', 'N/A')
-        except:
-            twoHundredDayAverage = 'N/A'
-        
-        try:
-            pegRatio = info.get('pegRatio', 'N/A')
-        except:
-            pegRatio = 'N/A'
-        
-        try:
-            beta = info.get('beta', 'N/A')
-        except:
-            beta = 'N/A'
-        
-        try:
-            one_month_change = stock.history(period='1mo')['Close'].pct_change().iloc[-1] * 100
-        except:
-            one_month_change = 'N/A'
-        
-        try:
-            six_month_change = stock.history(period='6mo')['Close'].pct_change().iloc[-1] * 100
-        except:
-            six_month_change = 'N/A'
-        
-        if drop_stock:
-            continue
-            
-        data.append({
-            'Ticker': ticker,
-            'Name': name,
-            'Sector': sector,
-            'Market Cap': market_cap if market_cap is not None else 'N/A',
-            'Price': open_price if open_price is not None else 'N/A',
-            'PE Ratio': pe_ratio if pe_ratio is not None else 'N/A',
-            'Earnings Growth': earnings_growth if earnings_growth is not None else 'N/A',
-            'EPS': eps if eps is not None else 'N/A',
-            '%-Change (1M)': one_month_change,
-            '%-Change (6M)': six_month_change,
-            '200 day Avg': twoHundredDayAverage if twoHundredDayAverage is not None else 'N/A',
-            'PEG Ratio': pegRatio if pegRatio is not None else 'N/A',
-            'Beta': beta if beta is not None else 'N/A'
-        })
-    
-    df = pd.DataFrame(data)
-    return df
-    #df.sort_values(by='Market Cap', ascending=False, inplace=True)
-    #write_stocks_to_db(df, 'stock_data')
-
-
-# def update_stock_data():
-#     url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-#     table = pd.read_html(url)
-#     df = table[0]
-#     tickers = df['Symbol'].tolist()
-#     save_ticker_data(tickers)
-
 
 
 if __name__ == '__main__':

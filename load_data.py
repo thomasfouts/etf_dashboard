@@ -290,7 +290,7 @@ def get_quarterly_annualized_risk_return(ticker):
     cache_key = f'risk_return_{ticker}'
     cached_data = mc.get(cache_key)
     if cached_data is not None:
-        data = pd.read_csv(io.StringIO(cached_data), index_col = 0, parse_dates = True)
+        data = pd.read_csv(io.StringIO(cached_data), index_col = 0)
         df = pd.DataFrame(data)
         df.index = pd.to_datetime(df.index)
         return df

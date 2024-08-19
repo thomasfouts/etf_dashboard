@@ -33,7 +33,7 @@ app.layout = dbc.Container(
     children=[
         dbc.Row(
             dbc.Col(
-                html.H2("Financial Dashboard", className="text-center"),
+                html.H2("Sector ETF Performance Dashboard", className="text-center"),
                 width=12,
                 style={"margin-bottom": "20px"}  # Space between the banner and the cards
             )

@@ -12,7 +12,7 @@ import bmemcached
 from database import get_db_connection
 from utilities import MACRO_TRACE_DICT, calculate_yoy, ETF_TO_SECTOR, TICKER_LIST
 
-FRED_API_KEY = "582b6c3c103024a7540bbcbc03ed0142"
+FRED_API_KEY = os.environ.get('FRED_API_KEY')
 fred = Fred(api_key=FRED_API_KEY)
 
 mc = bmemcached.Client(os.environ.get('MEMCACHEDCLOUD_SERVERS').split(','), os.environ.get('MEMCACHEDCLOUD_USERNAME'), os.environ.get('MEMCACHEDCLOUD_PASSWORD'))

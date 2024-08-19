@@ -1,13 +1,19 @@
 import psycopg2
 import pandas as pd
+import os
+
+my_db_host = os.environ.get('MY_DB_HOST')
+my_db_name = os.environ.get('MY_DB_NAME')
+my_db_user = os.environ.get('MY_DB_USER')
+my_db_pass = os.environ.get('MY_DB_PASS')
 
 
 def get_db_connection():
     conn = psycopg2.connect(
-        host='my-db-instance.c56guommcuf9.us-east-2.rds.amazonaws.com',
-        database="initial_db",
-        user="postgres",
-        password="Tjfouts17"
+        host= my_db_host,
+        database= my_db_name,
+        user= my_db_user,
+        password= my_db_pass
     )
     return conn
 

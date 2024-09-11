@@ -1,4 +1,6 @@
 # ETF Dashboard
+The live dashboard can be viewed at:
+www.foutsfinancialdashboard.com
 
 ## Overview
 
